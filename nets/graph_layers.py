@@ -385,12 +385,6 @@ class MultiHeadDecoder(nn.Module):
         self.n_heads = n_heads
         self.embed_dim = embed_dim
         self.input_dim = input_dim
-
-        # for Max-Pooling sublayer
-        self.project_graph_pos = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
-        self.project_graph_node = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
-        self.project_node_pos = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
-        self.project_node_node = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
         
         # for MHC sublayer (NFE aspect)
         self.compater_node = MultiHeadCompat(n_heads,
@@ -405,6 +399,12 @@ class MultiHeadDecoder(nn.Module):
                                 embed_dim,
                                 embed_dim,
                                 key_dim)
+        
+        # for Max-Pooling sublayer
+        self.project_graph_pos = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
+        self.project_graph_node = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
+        self.project_node_pos = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
+        self.project_node_node = nn.Linear(self.embed_dim, self.embed_dim, bias=False)
     
         
         # for feed-forward aggregation (FFA)sublayer
