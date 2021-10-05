@@ -10,8 +10,6 @@ from options import get_options
 from problems.problem_tsp import TSP
 from problems.problem_vrp import CVRP
 from agent.ppo import PPO
-# from agent.a2c import A2C
-from agent.utils import validate
 
 def load_agent(name):
     agent = {

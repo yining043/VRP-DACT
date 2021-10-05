@@ -65,6 +65,8 @@ def validate(rank, problem, agent, val_dataset, tb_logger, distributed = False, 
                                                                  record = False,
                                                                  show_bar = rank==0)
     
+    if distributed and opts.distributed: dist.barrier()
+    
     if distributed and opts.distributed:
         initial_cost = gather_tensor_and_concat(cost_hist[:,0].contiguous())
         time_used = gather_tensor_and_concat(torch.tensor([time.time() - s_time]).cuda())
