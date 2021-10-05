@@ -1,5 +1,5 @@
 # VRP-DACT
-DACT is a learning based improvement model for solving routing problems (tested on TSP and CVRP), which explores the dual-aspect representation, dual-aspect collaborative attention (DAC-Att) and the cyclic positional encoding (CPE) method. It is trained with n-step Proximal Policy Optimization (PPO) and a curriculum learning (CL) strategy.
+DACT is a learning based improvement model for solving routing problems (tested on TSP and CVRP), which explores the dual-aspect representation, dual-aspect collaborative attention (DAC-Att) and the cyclic positional encoding (CPE), and is trained with n-step Proximal Policy Optimization (PPO) and a curriculum learning (CL) strategy.
 
 ![](https://raw.githubusercontent.com/yining043/TSP-improve/master/outputs/ep_gif_0.gif)
 
