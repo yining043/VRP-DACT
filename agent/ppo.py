@@ -266,6 +266,7 @@ def train(rank, problem, agent, val_dataset, tb_logger):
     for epoch in range(opts.epoch_start, opts.epoch_end):
         
         # Training mode
+        agent.lr_scheduler.step(epoch)
         if rank == 0:
             print('\n\n')
             print("|",format(f" Training epoch {epoch} ","*^60"),"|")
@@ -334,7 +335,6 @@ def train_batch(
     agent.train()
     problem.train()
     memory = Memory()
-    agent.lr_scheduler.step(epoch)
 
     # prepare the input
     batch = move_to_cuda(batch, rank) if opts.distributed else move_to(batch, opts.device)

@@ -21,14 +21,16 @@ class Critic(nn.Module):
         self.n_layers = n_layers
         self.normalization = normalization
         
-        self.encoder = MultiHeadAttentionLayerforCritic(self.n_heads, 
+        self.encoder = nn.Sequential(*(
+                MultiHeadAttentionLayerforCritic(self.n_heads, 
                                     self.embedding_dim * 2, 
                                     self.hidden_dim * 2, 
                                     self.normalization)
+                        for _ in range(1)))
             
         self.value_head = ValueDecoder(input_dim = self.embedding_dim * 2,
                                        embed_dim = self.embedding_dim * 2)
-        
+
         
     def forward(self, input):
         
