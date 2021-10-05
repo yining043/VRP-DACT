@@ -1,3 +1,15 @@
+# project-specific ignores
+PDP-improve.ipynb
+.vscode
+log
+.ipynb_checkpoints
+*.zip
+trash
+logs*/
+outputs/
+others/
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
