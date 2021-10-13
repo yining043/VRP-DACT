@@ -9,7 +9,7 @@ DACT is a learning based improvement model for solving routing problems (e.g., T
 This repo implements our paper: Yining Ma, Jingwen Li, Zhiguang Cao, Wen Song, Le Zhang, Zhenghua Chen, Jing Tang, “[Learning to iteratively solve routing problems with dual-aspect collaborative transformer](https://arxiv.org/abs/2110.02544),” in Advances in Neural Information Processing Systems, vol. 34, 2021. Please cite our paper if the code is useful for your project.
 ```
 @inproceedings{ma2021learning,
-    author = {Yining Ma and Jingwen Li and Zhiguang Cao and Wen Song and Le Zhang and Zhenghua Chen and Jing Tang},
+    author = {Ma, Yining and Li, Jingwen and Cao, Zhiguang and Song, Wen and Zhang, Le and Chen, Zhenghua and Tang, Jing},
     booktitle = {Advances in Neural Information Processing Systems},
     title = {Learning to Iteratively Solve Routing Problems with Dual-Aspect Collaborative Transformer},
     volume = {34},
