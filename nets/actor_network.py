@@ -125,11 +125,6 @@ class Actor(nn.Module):
 
         # perform masking
         compatibility[mask_table] = -1e20
-
-        if do_sample:
-            all_ = (1 - mask_table.float()).view(bs, -1)
-            all_ = all_/all_.sum(1).view(-1,1)
-            all_[torch.isnan(all_)] = 1e-8
         
         del mask_table
 
