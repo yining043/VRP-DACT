@@ -9,14 +9,22 @@ DACT is a learning based improvement model for solving routing problems (e.g., T
 This repo implements our paper: Yining Ma, Jingwen Li, Zhiguang Cao, Wen Song, Le Zhang, Zhenghua Chen, Jing Tang, “[Learning to iteratively solve routing problems with dual-aspect collaborative transformer](https://arxiv.org/abs/2110.02544),” in Advances in Neural Information Processing Systems, vol. 34, 2021. Please cite our paper if the code is useful for your project.
 ```
 @inproceedings{ma2021learning,
-    author = {Ma, Yining and Li, Jingwen and Cao, Zhiguang and Song, Wen and Zhang, Le and Chen, Zhenghua and Tang, Jing},
-    booktitle = {Advances in Neural Information Processing Systems},
-    title = {Learning to Iteratively Solve Routing Problems with Dual-Aspect Collaborative Transformer},
-    volume = {34},
-    year = {2021}
+ author = {Ma, Yining and Li, Jingwen and Cao, Zhiguang and Song, Wen and Zhang, Le and Chen, Zhenghua and Tang, Jing},
+ booktitle = {Advances in Neural Information Processing Systems},
+ editor = {M. Ranzato and A. Beygelzimer and Y. Dauphin and P.S. Liang and J. Wortman Vaughan},
+ pages = {11096--11107},
+ publisher = {Curran Associates, Inc.},
+ title = {Learning to Iteratively Solve Routing Problems with Dual-Aspect Collaborative Transformer},
+ url = {https://proceedings.neurips.cc/paper/2021/file/5c53292c032b6cb8510041c54274e65f-Paper.pdf},
+ volume = {34},
+ year = {2021}
 }
 ```
 
+# One more thing
+You may also be interested in our new approach called [N2S](https://github.com/yining043/PDP-N2S) (IJCAI 2022) which makes DACT more efficient for solving pickup and delivery problems (PDPs).
+
+Paper: Yining Ma, Jingwen Li, Zhiguang Cao, Wen Song, Hongliang Guo, Yuejiao Gong and Yeow Meng Chee, “[Efficient Neural Neighborhood Search for Pickup and Delivery Problems](https://arxiv.org/abs/xxxx),” in the 31st International Joint Conference on Artificial Intelligence and the 25th European Conference on Artificial Intelligence (IJCAI-ECAI 22), 2022.
 
 # Dependencies
 * Python>=3.6
