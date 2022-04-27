@@ -143,24 +143,24 @@ class PPO:
         
         for i in range(val_m):
             if i == 1: 
-                batch['coordinates'][:,i,0] = 1 - batch['coordinates'][:,i,0]
+                batch['coordinates'][:,i,:,0] = 1 - batch['coordinates'][:,i,:,0]
             elif i==2:
-                batch['coordinates'][:,i,1] = 1 - batch['coordinates'][:,i,1]
+                batch['coordinates'][:,i,:,1] = 1 - batch['coordinates'][:,i,:,1]
             elif i==3:
-                batch['coordinates'][:,i,0] = 1 - batch['coordinates'][:,i,0]
-                batch['coordinates'][:,i,1] = 1 - batch['coordinates'][:,i,1]
+                batch['coordinates'][:,i,:,0] = 1 - batch['coordinates'][:,i,:,0]
+                batch['coordinates'][:,i,:,1] = 1 - batch['coordinates'][:,i,:,1]
             elif i==4:
-                batch['coordinates'][:,i,0] = batch['coordinates'][:,0,1]
-                batch['coordinates'][:,i,1] = batch['coordinates'][:,0,0]
+                batch['coordinates'][:,i,:,0] = batch['coordinates'][:,0,:,1]
+                batch['coordinates'][:,i,:,1] = batch['coordinates'][:,0,:,0]
             elif i==5:
-                batch['coordinates'][:,i,0] = 1 - batch['coordinates'][:,0,1]
-                batch['coordinates'][:,i,1] = batch['coordinates'][:,0,0]
+                batch['coordinates'][:,i,:,0] = 1 - batch['coordinates'][:,0,:,1]
+                batch['coordinates'][:,i,:,1] = batch['coordinates'][:,0,:,0]
             elif i==6:
-                batch['coordinates'][:,i,0] = batch['coordinates'][:,0,1]
-                batch['coordinates'][:,i,1] = 1 - batch['coordinates'][:,0,0]
+                batch['coordinates'][:,i,:,0] = batch['coordinates'][:,0,:,1]
+                batch['coordinates'][:,i,:,1] = 1 - batch['coordinates'][:,0,:,0]
             elif i==7:
-                batch['coordinates'][:,i,0] = 1 - batch['coordinates'][:,0,1]
-                batch['coordinates'][:,i,1] = 1 - batch['coordinates'][:,0,0]
+                batch['coordinates'][:,i,:,0] = 1 - batch['coordinates'][:,0,:,1]
+                batch['coordinates'][:,i,:,1] = 1 - batch['coordinates'][:,0,:,0]
  
         batch['coordinates'] =  batch['coordinates'].view(-1, gs, dim)
         
