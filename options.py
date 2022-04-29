@@ -13,7 +13,7 @@ def get_options(args=None):
     parser.add_argument('--graph_size', type=int, default=20, help="the number of customers in the targeted problem (graph size)")
     parser.add_argument('--dummy_rate', type=float, default=0.5, help="add DUMMY_RATE * graph_size nodes as dummy depots (for CVRP only)")
     parser.add_argument('--step_method', default='2_opt', choices = ['2_opt','swap','insert'])
-    parser.add_argument('--init_val_met', choices = ['random','greedy','seq'], default = 'greedy', help='method to generate initial solutions for inference')
+    parser.add_argument('--init_val_met', choices = ['random','greedy','seq'], default = 'random', help='method to generate initial solutions for inference')
     parser.add_argument('--no_cuda', action='store_true', help='disable GPUs')
     parser.add_argument('--no_tb', action='store_true', help='disable Tensorboard logging')
     parser.add_argument('--show_figs', action='store_true', help='enable figure logging')
