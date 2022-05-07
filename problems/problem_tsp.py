@@ -224,10 +224,10 @@ class TSP(object):
             self.check_feasibility(rec)
         
         # calculate obj value
-        first_row = torch.arange(size, device = rec.device).long().unsqueeze(0).expand(batch_size, size)
+        #first_row = torch.arange(size, device = rec.device).long().unsqueeze(0).expand(batch_size, size)
         
         d1 = batch['coordinates'].gather(1, rec.long().unsqueeze(-1).expand(batch_size, size, 2))
-        d2 = batch['coordinates'].gather(1, first_row.unsqueeze(-1).expand(batch_size, size, 2))
+        d2 = batch['coordinates']#.gather(1, first_row.unsqueeze(-1).expand(batch_size, size, 2))
         length =  (d1  - d2).norm(p=2, dim=2).sum(1)
         
         return length
