@@ -11,7 +11,7 @@ def get_options(args=None):
     # Overall settings
     parser.add_argument('--problem', default='tsp', choices = ['vrp', 'tsp'], help="the targeted problem to solve, default 'tsp'")
     parser.add_argument('--graph_size', type=int, default=20, help="the number of customers in the targeted problem (graph size)")
-    parser.add_argument('--dummy_rate', type=float, default=0.5, help="add DUMMY_RATE * graph_size nodes as dummy depots (for CVRP only)")
+    parser.add_argument('--dummy_rate', type=float, default=0.5, help="add DUMMY_RATE * graph_size nodes as dummy depots (for CVRP only)") # see Jupyter Notebook for example use
     parser.add_argument('--step_method', default='2_opt', choices = ['2_opt','swap','insert'])
     parser.add_argument('--init_val_met', choices = ['random','greedy','seq'], default = 'random', help='method to generate initial solutions for inference')
     parser.add_argument('--no_cuda', action='store_true', help='disable GPUs')
@@ -34,13 +34,13 @@ def get_options(args=None):
 
     # Training parameters
     parser.add_argument('--RL_agent', default='ppo', choices = ['ppo'], help='RL Training algorithm')
-    parser.add_argument('--gamma', type=float, default=0.999, help='reward discount factor for future rewards')
+    parser.add_argument('--gamma', type=float, default=0.999, help='reward discount factor for future rewards') # should be less than one
     parser.add_argument('--K_epochs', type=int, default=3, help='mini PPO epoch')
     parser.add_argument('--eps_clip', type=float, default=0.1, help='PPO clip ratio')
     parser.add_argument('--T_train', type=int, default=200, help='number of itrations for training')
     parser.add_argument('--n_step', type=int, default=4, help='n_step for return estimation')
-    parser.add_argument('--best_cl', action='store_true', help='use best solution found in CL as initial solution for training')
-    parser.add_argument('--Xi_CL', type=float, default=0.25, help='hyperparameter of CL')
+    parser.add_argument('--best_cl', action='store_true', help='use best solution found in CL as initial solution for training') # useful for most of cases
+    parser.add_argument('--Xi_CL', type=float, default=0.25, help='hyperparameter of CL') 
     parser.add_argument('--batch_size', type=int, default=600,help='number of instances per batch during training')
     parser.add_argument('--epoch_end', type=int, default=200, help='maximum training epoch')
     parser.add_argument('--epoch_size', type=int, default=12000, help='number of instances per epoch during training')
@@ -78,7 +78,7 @@ def get_options(args=None):
     os.environ['MASTER_PORT'] = '4869'
     # processing settings
     opts.use_cuda = torch.cuda.is_available() and not opts.no_cuda
-    opts.P = 250 if opts.eval_only else 1e10
+    opts.P = 250 if opts.eval_only else 1e10 # can set to smaller values e.g., 20, for generalization 
     opts.run_name = "{}_{}".format(opts.run_name, time.strftime("%Y%m%dT%H%M%S")) \
         if not opts.resume else opts.resume.split('/')[-2]
     opts.save_dir = os.path.join(
