@@ -557,14 +557,50 @@ class EmbeddingNet(nn.Module):
         return np.cos(omiga * np.abs(np.mod(x, 2 * T) - T) + fai)
         
     # implements the CPE
-    def Cyclic_Positional_Encoding(self, n_position, emb_dim, mean_pooling = True):
+    class EmbeddingNet(nn.Module):
+    
+    def __init__(
+            self,
+            node_dim,
+            embedding_dim,
+            seq_length,
+        ):
+        super(EmbeddingNet, self).__init__()
+        self.node_dim = node_dim
+        self.embedding_dim = embedding_dim
+        self.embedder = nn.Linear(node_dim, embedding_dim, bias = False)
+        
+        # Two ways for generalizing CPEs:
+        # -- 1. Use the target size CPE directly (default)
+        self.pattern = self.Cyclic_Positional_Encoding(seq_length, embedding_dim)
+        # -- 2. Use the original size CPE: reuse the wavelength of the original size but make it compatible with the target size (by duplicating or discarding)
+        # way 1 works well for most of cases
+        # original_size, target_size = 100, 150
+        # self.pattern = self.Cyclic_Positional_Encoding(original_size, embedding_dim, target_size=target_size)
+        
+    def init_parameters(self):
+
+        for param in self.parameters():
+            stdv = 1. / math.sqrt(param.size(-1))
+            param.data.uniform_(-stdv, stdv)
+    
+    def basesin(self, x, omiga, fai = 0):
+        T = 2 * np.pi / omiga
+        return np.sin(omiga * np.abs(np.mod(x, 2 * T) - T) + fai)
+    
+    def basecos(self, x, omiga, fai = 0):
+        T = 2 * np.pi / omiga
+        return np.cos(omiga * np.abs(np.mod(x, 2 * T) - T) + fai)
+        
+    # implements the CPE
+    def Cyclic_Positional_Encoding(self, n_position, emb_dim, mean_pooling = True, target_size=None):
         
         skip_base = np.power(n_position, 1 / (emb_dim // 2))
         skip_set = np.linspace(skip_base, n_position, emb_dim // 2, dtype = 'int')
         x = np.zeros((n_position, emb_dim))
          
         for i in range(emb_dim):
-            # see Appendix B
+            # skip is the wavelength (there is a typo in the original NeurIPS Appendix B, corrected in the Arkiv version)
             skip = skip_set[i //3 * 3 + 1] if  (i //3 * 3 + 1) < (emb_dim // 2) else skip_set[-1]
             
             # get z(i) in the paper (via longer_pattern) 
@@ -573,11 +609,12 @@ class EmbeddingNet(nn.Module):
             else:
                 longer_pattern = np.arange(0, n_position + 0.01, 0.01)
                 skip = n_position
-                
             num = len(longer_pattern) - 1
+            
+            # omiga is the angular frequencies
             omiga = 2 * np.pi / skip
             
-            # see Appendix B
+            # fai is to diverse the last half embeddings
             fai = 0 if i <= (emb_dim // 2) else  2 * np.pi * ((-i + (emb_dim // 2)) / (emb_dim // 2))
             
             # Eq. (4) in the paper
@@ -589,6 +626,12 @@ class EmbeddingNet(nn.Module):
         pattern = torch.from_numpy(x).type(torch.FloatTensor)
         pattern_sum = torch.zeros_like(pattern)
         
+        # for generalization (way 2): reuse the wavelength of the original size but make it compatible with the target size (by duplicating or discarding)
+        if target_size is not None:
+            pattern = pattern[np.ceil(np.linspace(0, n_position-1,target_size))]
+            pattern_sum = torch.zeros_like(pattern)
+            n_position = target_size
+        
         # averaging the adjacient embeddings if needed (optional, almost the same performance)
         arange = torch.arange(n_position)
         pooling = [0] if not mean_pooling else[-2, -1, 0, 1, 2]
@@ -598,7 +641,6 @@ class EmbeddingNet(nn.Module):
             index = (arange + i + n_position) % n_position
             pattern_sum += pattern.gather(0, index.view(-1,1).expand_as(pattern))
         pattern = 1. / time * pattern_sum - pattern.mean(0)
-        #### ---- 
         
         return pattern    
 
