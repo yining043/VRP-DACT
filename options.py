@@ -78,7 +78,7 @@ def get_options(args=None):
     os.environ['MASTER_PORT'] = '4869'
     # processing settings
     opts.use_cuda = torch.cuda.is_available() and not opts.no_cuda
-    opts.P = 250 if opts.eval_only else 1e10 # can set to smaller values e.g., 20, for generalization 
+    opts.P = 250 if opts.eval_only else 1e10 # can set to smaller values e.g., 20 or 10, for generalization 
     opts.run_name = "{}_{}".format(opts.run_name, time.strftime("%Y%m%dT%H%M%S")) \
         if not opts.resume else opts.resume.split('/')[-2]
     opts.save_dir = os.path.join(
