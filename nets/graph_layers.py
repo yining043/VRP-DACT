@@ -529,36 +529,7 @@ class FFandNormsubLayer(nn.Module):
 
 # implements the initilization of the NFEs and the PFEs
 class EmbeddingNet(nn.Module):
-    
-    def __init__(
-            self,
-            node_dim,
-            embedding_dim,
-            seq_length,
-        ):
-        super(EmbeddingNet, self).__init__()
-        self.node_dim = node_dim
-        self.embedding_dim = embedding_dim
-        self.embedder = nn.Linear(node_dim, embedding_dim, bias = False)
-        self.pattern = self.Cyclic_Positional_Encoding(seq_length, embedding_dim) # initilize once and reuse later
 
-    def init_parameters(self):
-
-        for param in self.parameters():
-            stdv = 1. / math.sqrt(param.size(-1))
-            param.data.uniform_(-stdv, stdv)
-    
-    def basesin(self, x, omiga, fai = 0):
-        T = 2 * np.pi / omiga
-        return np.sin(omiga * np.abs(np.mod(x, 2 * T) - T) + fai)
-    
-    def basecos(self, x, omiga, fai = 0):
-        T = 2 * np.pi / omiga
-        return np.cos(omiga * np.abs(np.mod(x, 2 * T) - T) + fai)
-        
-    # implements the CPE
-    class EmbeddingNet(nn.Module):
-    
     def __init__(
             self,
             node_dim,
