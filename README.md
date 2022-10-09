@@ -1,5 +1,8 @@
 # VRP-DACT
+
 DACT is a learning based improvement model for solving routing problems (e.g., TSP and CVRP), which explores dual-aspect representation, dual-aspect collaborative attention (DAC-Att) and cyclic positional encoding (CPE). It is trained by n-step Proximal Policy Optimization (PPO) with a curriculum learning (CL) strategy.
+
+***Important notes***: *In branch [new_version](https://github.com/yining043/VRP-DACT/tree/new_version), we have fixed some inaccuracies in the calculation of the feasibility masks for CVRP. As a result, the updated DACT (for CVRP) has shown a much faster training speed and much better performance. We will update the new results on Arkiv preprint and provide new pre-trained models asap. Sorry for any inconvenience caused.*
 
 ![](https://raw.githubusercontent.com/yining043/TSP-improve/master/outputs/ep_gif_0.gif)
 
@@ -21,12 +24,11 @@ This repo implements our paper: Yining Ma, Jingwen Li, Zhiguang Cao, Wen Song, L
 }
 ```
 
-# Documentation
-Please note that in our implementation, the VRP solution is stored in a linked list format. Let us consider a TSP-20 solution [ 6 -> 17 -> 3 -> 9 -> 16 -> 4 -> 12 -> 0 -> 1 -> 5 -> 13 -> 19 -> 11 -> 18 -> 8 -> 14 -> 15 -> 7 -> 2 -> 10 -> 6], we would store this solution as rec = torch.tensor([[ 1, 5, 10, 9, 12, 13, 17, 2, 14, 16, 6, 18, 0, 19, 15, 7, 4, 3,8, 11]]),. Here, if rec[i] = j, it means the node i is connected to node j, i.e., edge i-j is in the solution. For example, edge 0-1, edge 1-5, edge 2-10 are in the solution, so we have rec[0]=1, rec[1]=5 and rec[2]=10.
-
 
 # Jupyter Notebook
 We provide a Jupyter notebook to help you get started and understand our code. Please open the [Jupyter notebook](./Play_with_DACT.ipynb) for more details.
+
+Please note that in our implementation, the VRP solution is stored in a linked list format. Let us consider a TSP-20 solution [ 6 -> 17 -> 3 -> 9 -> 16 -> 4 -> 12 -> 0 -> 1 -> 5 -> 13 -> 19 -> 11 -> 18 -> 8 -> 14 -> 15 -> 7 -> 2 -> 10 -> 6], we would store this solution as rec = torch.tensor([[ 1, 5, 10, 9, 12, 13, 17, 2, 14, 16, 6, 18, 0, 19, 15, 7, 4, 3,8, 11]]),. Here, if rec[i] = j, it means the node i is connected to node j, i.e., edge i-j is in the solution. For example, edge 0-1, edge 1-5, edge 2-10 are in the solution, so we have rec[0]=1, rec[1]=5 and rec[2]=10.
 
 
 # One more thing
@@ -59,14 +61,15 @@ Training data is generated on the fly. Please follow repo [wouterkool/attention-
 ### TSP example
 For training TSP instances with 50 nodes and GPU cards {0,1}:
 ```python
-CUDA_VISIBLE_DEVICES=0,1 python run.py --problem tsp --graph_size 50 --step_method 2_opt --n_step 4 --T_train 200 --Xi_CL 2 --max_grad_norm 0.2 --val_m 1 --val_dataset  './datasets/tsp_50_10000.pkl' --run_name 'example_training_TSP50'
+CUDA_VISIBLE_DEVICES=0,1 python run.py --problem tsp --graph_size 50 --step_method 2_opt --n_step 4 --T_train 200 --Xi_CL 2 --best_cl --max_grad_norm 0.2 --val_m 1 --val_dataset  './datasets/tsp_50_10000.pkl' --run_name 'example_training_TSP50'
 ```
 
 ### CVRP example
-For training CVRP instances with 20 nodes and GPU cards {0,1}:
+For training CVRP instances with 20 nodes and GPU cards 0:
 ```python
-CUDA_VISIBLE_DEVICES=0,1 python run.py --problem vrp --graph_size 20 --dummy_rate 0.5 --step_method 2_opt --n_step 10 --T_train 500 --Xi_CL 1 --max_grad_norm 0.04 --val_m 1 --val_dataset  './datasets/cvrp_20_10000.pkl' --run_name 'example_training_CVRP20'
+CUDA_VISIBLE_DEVICES=0 python run.py --problem vrp --graph_size 20 --dummy_rate 0.5 --step_method 2_opt --n_step 5 --T_train 250 --Xi_CL 1 --best_cl --max_grad_norm 0.04 --val_m 1 --val_dataset  './datasets/cvrp_20_10000.pkl' --run_name 'example_training_CVRP20'
 ```
+Note: hyper-parameters ''--n_step 5 --T_train 250'' are good enough for CVRP now
 
 ### Warm start
 You can initialize a run using a pretrained model by adding the --load_path option:

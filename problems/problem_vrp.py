@@ -4,6 +4,16 @@ import pickle
 import os
 import numpy as np
 
+
+CAPACITIES = {
+            10: 20.,
+            20: 30.,
+            50: 40.,
+            100: 50.,
+            # add new data if needed
+        }
+
+
 class CVRP(object):
 
     NAME = 'cvrp'  # Capacitiated Vehicle Routing Problem
@@ -42,71 +52,39 @@ class CVRP(object):
         if self.step_method == '2_opt':
             
             # only allow in-route 2-opt
-            route_plan = (contex // 1000).long() % self.dummy_size            
+            route_plan = (contex // 1000).long() % self.dummy_size     
+            mask_in = route_plan.view(-1,self.size,1) != route_plan.view(-1,1,self.size)
+            mask_in[:,:self.dummy_size,:] = True
+            mask_in[:,:, :self.dummy_size] = True
+            # special case
+            mask_special1 = mask_in.clone() & False
+            mask_special1[:,self.dummy_size:,:] = True
+            mask_special1 |= ((route_plan.view(-1,self.size,1) - 1) % self.dummy_size) != route_plan.view(-1,1,self.size)
+            mask_special2 = mask_in.clone() & False
+            mask_special2[:,:,self.dummy_size:] = True
+            mask_special2 |= ((route_plan.view(-1,self.size,1)) % self.dummy_size) != route_plan.view(-1,1,self.size)
             
             # further allow btw-route 2-opt
-            cum_demand = ((contex % 1) * 2)
-            
-            total = patial_sum.gather(-1, route_plan)
-            
-            pi = cum_demand.view(-1,self.size,1)
-            pj = cum_demand.view(-1,1,self.size) 
-            
-            ti = total.view(-1,self.size,1)
-            tj = total.view(-1,1,self.size)
-            
             demand = batch['demand'] if isinstance(batch, dict) else batch[:,:,-1]
-            
-            
-            cor = (demand != 0).float().view(-1,1,self.size) 
-            
-            corj = demand.view(-1,1,self.size) 
-            
-            mask = ((pi + pj + corj) > 1.) | ((ti - pi * cor) + (tj - pj * cor) - corj > 1.)
-            
+            cum_demand = ((contex % 1) * 2)
+            total = patial_sum.gather(-1, route_plan)
+            cor = (demand != 0).float() 
+            pi = cum_demand.view(-1,self.size,1)
+            pj = (cor * cum_demand).view(-1,1,self.size) 
+            qi = (cor * (total - cum_demand)).view(-1,self.size,1)
+            qj = (total - cor * cum_demand).view(-1,1,self.size)
+            corj = demand.view(-1,1,self.size)
+            mask_btw = ((pi + pj + corj) > (1.+0.1/CAPACITIES[self.real_size])) | ((qi + qj - corj) > (1.+0.1/CAPACITIES[self.real_size]))
+            mask =  ~(~mask_in + ~mask_btw + ~mask_special1 + ~mask_special2)
             mask[:,:self.dummy_size, :self.dummy_size] = False
-        
+
             return mask, contex, torch.cat((cum_demand.view(-1, self.size, 1),
                                             demand.view(-1, self.size, 1),
                                             (total - cor.view(-1,self.size) * cum_demand).view(-1, self.size, 1),
                                             ), -1
                                             ) 
-
-                                        
-        elif self.step_method == 'insert':
-            
-            route_plan = (contex // 1000).long() % self.dummy_size
-
-            cum_demand = ((contex % 1) * 2)
-            
-            total = patial_sum.gather(-1, route_plan)
-            
-            pi = cum_demand.view(-1,self.size,1)
-            pj = cum_demand.view(-1,1,self.size) 
-            
-            ti = total.view(-1,self.size,1)
-            tj = total.view(-1,1,self.size)
-            
-            demand = batch['demand'] if isinstance(batch, dict) else batch[:,:,-1]
-            
-            
-            corri = (demand != 0).float().view(-1,self.size, 1) 
-            
-            cori = demand.view(-1,self.size,1)
-            corj = demand.view(-1,1,self.size) 
-            
-            
-            mask = ((ti - pi * corri)  + pi > 1.) | ( cori + tj  > 1.)
-        
-            return mask, contex, torch.cat((cum_demand.view(-1, self.size, 1),
-                                            demand.view(-1, self.size, 1),
-                                            (total - corri.view(-1,self.size) * cum_demand).view(-1, self.size, 1),
-                                            ), -1
-                                            ) 
-
         else:
             raise NotImplementedError()
-        
         
     
     def get_initial_solutions(self, batch):
@@ -384,14 +362,6 @@ class CVRPDataset(Dataset):
     def __init__(self, filename=None, size=20, num_samples=10000, offset=0, distribution=None, DUMMY_RATE = None):
         
         super(CVRPDataset, self).__init__()
-        
-        # From VRP with RL paper https://arxiv.org/abs/1802.04240
-        CAPACITIES = {
-            10: 20.,
-            20: 30.,
-            50: 40.,
-            100: 50.
-        }
         
         self.data = []
         self.size = int(np.ceil(size * (1 + DUMMY_RATE))) # the number of real nodes plus dummy nodes in cvrp
