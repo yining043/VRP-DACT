@@ -2,7 +2,7 @@
 
 DACT is a learning based improvement model for solving routing problems (e.g., TSP and CVRP), which explores dual-aspect representation, dual-aspect collaborative attention (DAC-Att) and cyclic positional encoding (CPE). It is trained by n-step Proximal Policy Optimization (PPO) with a curriculum learning (CL) strategy.
 
-***Important notes***: *In branch [new_version](https://github.com/yining043/VRP-DACT/tree/new_version), we have fixed some inaccuracies in the calculation of the feasibility masks for CVRP. As a result, the updated DACT (for CVRP) has shown a much faster training speed and much better performance. We will update the new results on Arkiv preprint and provide new pre-trained models asap. Sorry for any inconvenience caused.*
+***Important notes***: *In branch [new_version](https://github.com/yining043/VRP-DACT/tree/new_version), we have fixed some inaccuracies in the calculation of the feasibility masks for CVRP. As a result, the updated DACT (for CVRP) has shown a much faster training speed and much better performance. We will update the new results on ArXiv preprint and provide new pre-trained models asap. Sorry for any inconvenience caused.*
 
 ![](https://raw.githubusercontent.com/yining043/TSP-improve/master/outputs/ep_gif_0.gif)
 
