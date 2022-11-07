@@ -92,12 +92,12 @@ class PPO:
         
         # load data for actor
         model_actor = get_inner_model(self.actor)
-        model_actor.load_state_dict({**model_actor.state_dict(), **load_data.get('actor', {})})
+        model_actor.load_state_dict({**load_data.get('actor', {})})
         
         if not self.opts.eval_only:
             # load data for critic
             model_critic = get_inner_model(self.critic)
-            model_critic.load_state_dict({**model_critic.state_dict(), **load_data.get('critic', {})})
+            model_critic.load_state_dict({**load_data.get('critic', {})})
             # load data for optimizer
             self.optimizer.load_state_dict(load_data['optimizer'])
             # load data for torch and cuda

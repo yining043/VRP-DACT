@@ -83,6 +83,8 @@ def validate(rank, problem, agent, val_dataset, tb_logger, distributed = False, 
         search_history = best_hist
         reward = r
         
+    if distributed and opts.distributed: dist.barrier()
+        
     # log to screen  
     if rank == 0: log_to_screen(time_used, 
                                   initial_cost, 
@@ -109,4 +111,6 @@ def validate(rank, problem, agent, val_dataset, tb_logger, distributed = False, 
                       T = opts.T_max,
                       show_figs = opts.show_figs,
                       epoch = _id)
+        
+    if distributed and opts.distributed: dist.barrier()
     
