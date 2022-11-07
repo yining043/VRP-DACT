@@ -66,7 +66,7 @@ For training CVRP instances with 20 nodes and GPU cards 0:
 ```python
 CUDA_VISIBLE_DEVICES=0 python run.py --problem vrp --graph_size 20 --dummy_rate 0.5 --step_method 2_opt --n_step 5 --T_train 250 --Xi_CL 1 --best_cl --max_grad_norm 0.04 --val_m 1 --val_dataset  './datasets/cvrp_20_10000.pkl' --run_name 'example_training_CVRP20'
 ```
-*<u>Note: hyper-parameters ''--n_step 5 --T_train 250'' are good enough for CVRP now. And we consider loading the pre-trained models of TSP50, CVRP20, and CVRP50 to train TSP100, CVRP-50, and CVRP100 for faster convergency respectively.</u>*
+*<u>Note: hyper-parameters ''--n_step 5 --T_train 250'' are good enough for CVRP now. And we consider loading the pre-trained models of TSP50, CVRP20, and CVRP50 to train TSP100, CVRP-50, and CVRP100 for faster convergency respectively. And please pay attention to the argument "--dummy_rate" (CVRP) which should be set to a proper value for different CVRP instances (e.g., 0.5 for CVRP20, 0.4 for CVRP50, 0.2 for CVRP100).</u>*
 
 ### Warm start
 You can initialize a run using a pretrained model by adding the --load_path option:
