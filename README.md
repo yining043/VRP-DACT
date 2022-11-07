@@ -104,7 +104,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python run.py --problem vrp --graph_size 100 --dumm
 ```
 
 *<u>See [options.py](./options.py) for detailed help on the meaning of each argument.
-For generalization of DACT on larger sizes and different distributions, a good practice is to consider reducing the opts.P to a smaller value (see line 81 of options.py). Meanwhile, when the distribution/size is significantly different, we can consider the way 2 of generalizing CPEs (see lines 544-550 of nets/graph_layers.py) for better performance. See the detailed configuration in the updated Arkiv preprint (v3). And please pay attention to the argument "--dummy_rate" (CVRP) which should be set to a proper value for different CVRP instances.</u>*
+For generalization of DACT on larger sizes and different distributions, a good practice is to consider reducing the opts.P to a smaller value (see line 81 of options.py). Meanwhile, when the distribution/size is significantly different, we can consider the way 2 of generalizing CPEs (see lines 544-550 of nets/graph_layers.py) for better performance. See the detailed configuration in the updated Arkiv preprint (v3). And please pay attention to the argument "--dummy_rate" (CVRP) which should be set to a proper value for different CVRP instances (e.g., 0.5 for CVRP20, 0.4 for CVRP50, 0.2 for CVRP100).</u>*
 
 # Acknowledgements
 The code and the framework are based on the repos [wouterkool/attention-learn-to-route](https://github.com/wouterkool/attention-learn-to-route) and [yining043/TSP-improve](https://github.com/yining043/TSP-improve). And we thank @small-Qing and @yzhang-gh for raising insightful issues to help improve this project.
