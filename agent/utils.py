@@ -20,8 +20,6 @@ def validate(rank, problem, agent, val_dataset, tb_logger, distributed = False, 
     opts = agent.opts
     agent.eval()
     problem.eval()
-    torch.manual_seed(opts.seed)
-    np.random.seed(opts.seed)
     if rank==0: print(f'\nInference with x{opts.val_m} augments...', flush=True)
     
     val_dataset = problem.make_dataset(size=opts.graph_size,
