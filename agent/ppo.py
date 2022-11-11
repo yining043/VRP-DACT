@@ -543,7 +543,7 @@ def train_batch(
             loss.backward()
             
             # Clip gradient norm and get (clipped) gradient norms for logging
-            current_step = int(step * T / n_step * K_epochs + t//n_step * K_epochs  + _k)
+            current_step = int(step * T / n_step * K_epochs + (t-1)//n_step * K_epochs  + _k)
             grad_norms = clip_grad_norms(agent.optimizer.param_groups, opts.max_grad_norm)
             
             # perform gradient descent
@@ -551,9 +551,9 @@ def train_batch(
     
             # Logging to tensorboard            
             if(not opts.no_tb) and rank == 0:
-                if current_step % int(opts.log_step) == 0:
+                if (current_step + 1) % int(opts.log_step) == 0:
                     log_to_tb_train(tb_logger, agent, Reward, ratios, bl_val_detached, total_cost, grad_norms, memory.rewards, entropy, approx_kl_divergence,
-                       reinforce_loss, baseline_loss, logprobs, initial_cost, opts.show_figs, current_step)
+                       reinforce_loss, baseline_loss, logprobs, initial_cost, opts.show_figs, current_step + 1)
                     
             if rank == 0: pbar.update(1)     
         
