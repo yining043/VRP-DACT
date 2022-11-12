@@ -5,7 +5,6 @@ from utils.logger import log_to_screen, log_to_tb_val
 import torch.distributed as dist
 from torch.utils.data import DataLoader
 from tensorboard_logger import Logger as TbLogger
-import numpy as np
 
 def gather_tensor_and_concat(tensor):
     gather_t = [torch.ones_like(tensor) for _ in range(dist.get_world_size())]
@@ -15,12 +14,11 @@ def gather_tensor_and_concat(tensor):
 def validate(rank, problem, agent, val_dataset, tb_logger, distributed = False, _id = None):
             
     # Validate mode
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
     opts = agent.opts
+    if rank==0: print(f'\nInference with x{opts.val_m} augments...', flush=True)
+    
     agent.eval()
     problem.eval()
-    if rank==0: print(f'\nInference with x{opts.val_m} augments...', flush=True)
     
     val_dataset = problem.make_dataset(size=opts.graph_size,
                                num_samples=opts.val_size,
@@ -32,9 +30,8 @@ def validate(rank, problem, agent, val_dataset, tb_logger, distributed = False, 
         torch.distributed.init_process_group(backend='nccl', world_size=opts.world_size, rank = rank)
         torch.cuda.set_device(rank)
         agent.actor.to(device)
-        if torch.cuda.device_count() > 1:
-            agent.actor = torch.nn.parallel.DistributedDataParallel(agent.actor,
-                                                                   device_ids=[rank])
+        agent.actor = torch.nn.parallel.DistributedDataParallel(agent.actor, device_ids=[rank])
+        
         if not opts.no_tb and rank == 0:
             tb_logger = TbLogger(os.path.join(opts.log_dir, "{}_{}".format(opts.problem, 
                                                           opts.graph_size), opts.run_name))
@@ -107,7 +104,6 @@ def validate(rank, problem, agent, val_dataset, tb_logger, distributed = False, 
                       val_size =  opts.val_size,
                       dataset_size = len(val_dataset), 
                       T = opts.T_max,
-                      show_figs = opts.show_figs,
                       epoch = _id)
         
     if distributed and opts.distributed: dist.barrier()

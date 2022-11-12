@@ -1,7 +1,5 @@
 import torch
 import math
-from utils.plots import plot_grad_flow, plot_improve_pg
-
     
 def log_to_screen(time_used, init_value, best_value, reward, costs_history, search_history,
                   batch_size, dataset_size, T):
@@ -16,7 +14,7 @@ def log_to_screen(time_used, init_value, best_value, reward, costs_history, sear
     print('-'*60)
     print('Avg init cost:'.center(35), '{:<10f} +- {:<10f}'.format(
             init_value.mean(), torch.std(init_value) / math.sqrt(batch_size)))
-    for per in range(500,T,500):
+    for per in range(500,T+1,500):
         cost_ = costs_history[:,per]
         print(f'Avg cost after T={per} steps:'.center(35), '{:<10f} +- {:<10f}'.format(
                 cost_.mean(), 
@@ -24,7 +22,7 @@ def log_to_screen(time_used, init_value, best_value, reward, costs_history, sear
     # best cost
     print('-'*60)
     
-    for per in range(500,T,500):
+    for per in range(500,T+1,500):
         cost_ = search_history[:,per]
         print(f'Avg best cost after T={per} steps:'.center(35), '{:<10f} +- {:<10f}'.format(
                 cost_.mean(), 
@@ -39,11 +37,8 @@ def log_to_screen(time_used, init_value, best_value, reward, costs_history, sear
     print('-'*60, '\n')
     
 def log_to_tb_val(tb_logger, time_used, init_value, best_value, reward, costs_history, search_history,
-                  batch_size, val_size, dataset_size, T, show_figs, epoch):
-    if show_figs:
-        tb_logger.log_images('validation/improve_pg',[plot_improve_pg(costs_history)], epoch)
-        tb_logger.log_images('validation/search_pg',[plot_improve_pg(search_history)], epoch)
-        
+                  batch_size, val_size, dataset_size, T, epoch):
+    
     tb_logger.log_value('validation/avg_time',  time_used.mean() / dataset_size, epoch)
     tb_logger.log_value('validation/avg_total_reward', reward.sum(1).mean(), epoch)
     tb_logger.log_value('validation/avg_step_reward', reward.mean(), epoch)
@@ -57,7 +52,7 @@ def log_to_tb_val(tb_logger, time_used, init_value, best_value, reward, costs_hi
         tb_logger.log_value(f'validation/avg_.{per}_cost', cost_.mean(), epoch)
 
 def log_to_tb_train(tb_logger, agent, Reward, ratios, bl_val_detached, total_cost, grad_norms, reward, entropy, approx_kl_divergence,
-               reinforce_loss, baseline_loss, log_likelihood, initial_cost, show_figs, mini_step):
+               reinforce_loss, baseline_loss, log_likelihood, initial_cost, mini_step):
     
     tb_logger.log_value('learnrate_pg', agent.optimizer.param_groups[0]['lr'], mini_step)            
     avg_cost = (total_cost).mean().item()
@@ -84,7 +79,3 @@ def log_to_tb_train(tb_logger, agent, Reward, ratios, bl_val_detached, total_cos
     
     tb_logger.log_value('grad/critic', grad_norms[1], mini_step)
     tb_logger.log_value('grad_clipped/critic', grad_norms_clipped[1], mini_step)
-    
-    if show_figs and mini_step % 1000 == 0:
-        tb_logger.log_images('grad/actor',[plot_grad_flow(agent.actor)], mini_step)
-        tb_logger.log_images('grad/critic',[plot_grad_flow(agent.critic)], mini_step)

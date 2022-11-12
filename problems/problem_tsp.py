@@ -2,7 +2,6 @@ from torch.utils.data import Dataset
 import torch
 import pickle
 import os
-import numpy as np
 
 class TSP(object):
 
@@ -10,14 +9,12 @@ class TSP(object):
     
     def __init__(self, p_size, init_val_met = 'greedy', with_assert = False, step_method = '2_opt', P = 10, DUMMY_RATE = 0):
         
-        self.size = p_size          # the number of nodes in pdp 
+        self.size = p_size
         self.do_assert = with_assert
         self.step_method = step_method
         self.init_val_met = init_val_met
-        self.state = 'eval'
-        self.P = P # for perturb
-        print(f'TSP with {self.size} nodes.', 
-              ' Do assert:', with_assert)
+        self.P = P
+        print(f'TSP with {self.size} nodes.', ' Do assert:', with_assert)
         self.train()
     
     def eval(self, perturb = True):
@@ -39,7 +36,6 @@ class TSP(object):
         batch_size = batch['coordinates'].size(0)
     
         def get_solution(methods):
-            p_size = self.size
             
             if methods == 'random':
                 
@@ -49,14 +45,9 @@ class TSP(object):
                 
                 for i in range(self.size - 1):
                     rec.scatter_(1,set.gather(1, index + i), set.gather(1, index + i + 1))
-                
                 rec.scatter_(1,set[:,-1].view(-1,1), set.gather(1, index))
+                
                 return rec
-            
-            elif methods == 'seq':
-                seq = np.concatenate((np.linspace(1, p_size -1, p_size -1),
-                                      [0]))
-                return torch.tensor(seq).long()
             
             elif methods == 'greedy':
 
@@ -71,14 +62,13 @@ class TSP(object):
                     d2 = batch['coordinates'].cpu()
                     
                     dists = (d1 - d2).norm(p=2, dim=2)
-                    
-                    dists.scatter_(1, selected_node, 1e5)
                     dists[~candidates] = 1e5
+                    
                     next_selected_node = dists.min(-1)[1].view(-1,1)
                     rec.scatter_(1,selected_node, next_selected_node)
                     candidates.scatter_(1, next_selected_node, 0)
                     selected_node = next_selected_node
-
+                    
                 return rec
             
             else:
@@ -86,13 +76,13 @@ class TSP(object):
 
         return get_solution(self.init_val_met).expand(batch_size, self.size).clone()
     
-    def step(self, batch, rec, exchange, pre_bsf, solving_state = None, best_solution = None):
+    def step(self, batch, rec, action, pre_bsf, solving_state = None, best_solution = None):
 
-        bs = exchange.size(0)
+        bs = action.size(0)
         pre_bsf = pre_bsf.view(bs,-1)
         
-        first = exchange[:,0].view(bs,1)
-        second = exchange[:,1].view(bs,1)
+        first = action[:,0].view(bs,1)
+        second = action[:,1].view(bs,1)
         
         if self.step_method  == 'swap':
             next_state = self.swap(rec, first, second)
@@ -114,25 +104,16 @@ class TSP(object):
         
         if self.do_perturb:
             
-            perturb_index = (solving_state[:,:1] > self.P).view(-1)
-            
+            perturb_index = (solving_state[:,:1] >= self.P).view(-1)
             solving_state[:,:1][perturb_index.view(-1, 1)] *= 0
-            
             pertrb_cnt = perturb_index.sum().item()
             
             if pertrb_cnt > 0:
-                
                 next_state[perturb_index] =  best_solution[perturb_index]
-            
-            return next_state, reward, torch.cat((new_obj[:,None], now_bsf[:,None]),-1), solving_state
-        
+
         return next_state, reward, torch.cat((new_obj[:,None], now_bsf[:,None]),-1), solving_state
 
-    
-    def check_cons(self,rec_in):
-        return torch.tensor(True, device = rec_in.device).view(-1,1).expand(rec_in.size(0), 1)
-        
-    
+
     def insert(self, solution, first, second, is_perturb = False): # insert first to the back of second
         
         rec = solution.clone()
@@ -202,8 +183,15 @@ class TSP(object):
         p_size = self.size
 
         assert (
-            (torch.arange(p_size, out=rec.new())).view(1, -1).expand_as(rec)  == 
+            torch.arange(p_size).to(rec.device).view(1, -1).expand_as(rec)  == 
             rec.sort(1)[0]
+        ).all(), "not visiting all nodes"
+        
+        real_rec = get_real_seq(rec)
+        
+        assert (
+            torch.arange(p_size).to(rec.device).view(1, -1).expand_as(real_rec)  == 
+            real_rec.sort(1)[0]
         ).all(), "not visiting all nodes"
     
     
@@ -223,11 +211,8 @@ class TSP(object):
         if self.do_assert:
             self.check_feasibility(rec)
         
-        # calculate obj value
-        #first_row = torch.arange(size, device = rec.device).long().unsqueeze(0).expand(batch_size, size)
-        
         d1 = batch['coordinates'].gather(1, rec.long().unsqueeze(-1).expand(batch_size, size, 2))
-        d2 = batch['coordinates']#.gather(1, first_row.unsqueeze(-1).expand(batch_size, size, 2))
+        d2 = batch['coordinates']
         length =  (d1  - d2).norm(p=2, dim=2).sum(1)
         
         return length
@@ -271,7 +256,7 @@ class TSPDataset(Dataset):
 
 def get_real_seq(solutions):
     batch_size, seq_length = solutions.size()
-    visited_time = torch.zeros((batch_size,seq_length))
+    visited_time = torch.zeros((batch_size,seq_length)).to(solutions.device)
     pre = torch.zeros((batch_size),device = solutions.device).long()
     for i in range(seq_length):
        visited_time[torch.arange(batch_size),solutions[torch.arange(batch_size),pre]] = i+1

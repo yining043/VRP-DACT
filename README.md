@@ -39,16 +39,7 @@ Paper: Yining Ma, Jingwen Li, Zhiguang Cao, Wen Song, Hongliang Guo, Yuejiao Gon
 * numpy
 * tensorboard_logger
 * tqdm
-* cv2
 * matplotlib
-
-### Note:
-For the exception below from package tensorboard_logger,
-```python
-AttributeError: module 'scipy.misc' has no attribute 'toimage'
-```
-Please refer to [issue #27](https://github.com/TeamHG-Memex/tensorboard_logger/issues/27) to fix it.
-
 
 # Usage
 ## Generating data

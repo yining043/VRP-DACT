@@ -601,6 +601,7 @@ class EmbeddingNet(nn.Module):
         
          # batch: batch_size, problem_size, dim
          batch_size, seq_length = solutions.size()
+         arange = torch.arange(batch_size)
          
          # expand for every batch
          CPE_embeddings = self.pattern.expand(batch_size, seq_length, embedding_dim).clone().to(solutions.device)
@@ -610,8 +611,8 @@ class EmbeddingNet(nn.Module):
              visited_time = torch.zeros((batch_size,seq_length),device = solutions.device)
              pre = torch.zeros((batch_size),device = solutions.device).long()
              for i in range(seq_length):
-                visited_time[torch.arange(batch_size),solutions[torch.arange(batch_size),pre]] = i+1
-                pre = solutions[torch.arange(batch_size),pre]
+                visited_time[arange,solutions[arange,pre]] = i+1
+                pre = solutions[arange,pre]
          index = (visited_time % seq_length).long().unsqueeze(-1).expand(batch_size, seq_length, embedding_dim)
          
          return torch.gather(CPE_embeddings, 1, index), visited_time.long()

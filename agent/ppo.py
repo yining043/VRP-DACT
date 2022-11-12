@@ -15,7 +15,6 @@ from utils import torch_load_cpu, get_inner_model, move_to, move_to_cuda
 from utils.logger import log_to_tb_train
 from agent.utils import validate
 
-
 class Memory:
     def __init__(self):
         self.actions = []
@@ -28,7 +27,6 @@ class Memory:
         del self.states[:]
         del self.logprobs[:]
         del self.rewards[:]
-
 
 def lr_sd(epoch, opts):
     return opts.lr_decay ** epoch
@@ -49,7 +47,7 @@ class PPO:
             n_layers = opts.n_encode_layers,
             normalization = opts.normalization,
             v_range = opts.v_range,
-            seq_length = size + (1 if problem_name == 'pdp' else 0 )
+            seq_length = size
         )
         
         if not opts.eval_only:
@@ -79,10 +77,6 @@ class PPO:
             
             self.actor.to(opts.device)
             if not opts.eval_only: self.critic.to(opts.device)
-            
-            if torch.cuda.device_count() > 1:
-                self.actor = torch.nn.DataParallel(self.actor)
-                if not opts.eval_only: self.critic = torch.nn.DataParallel(self.critic)
                 
     
     def load(self, load_path):
@@ -132,7 +126,7 @@ class PPO:
         self.actor.train()
         if not self.opts.eval_only: self.critic.train()
     
-    def rollout(self, problem, val_m, batch, do_sample = False, record = False, record_best = True, show_bar = False):
+    def rollout(self, problem, val_m, batch, do_sample = False, record = False, show_bar = False):
         
         # get instances and do data augments
         assert val_m <= 8
@@ -142,7 +136,7 @@ class PPO:
         if problem.NAME == 'cvrp': batch['demand'] = batch['demand'].unsqueeze(1).repeat(1,val_m,1).view(-1, gs)   
         
         for i in range(val_m):
-            if i == 1: 
+            if   i==1: 
                 batch['coordinates'][:,i,:,0] = 1 - batch['coordinates'][:,i,:,0]
             elif i==2:
                 batch['coordinates'][:,i,:,1] = 1 - batch['coordinates'][:,i,:,1]
@@ -172,8 +166,7 @@ class PPO:
         obj_history = [torch.cat((obj[:,None],obj[:,None]),-1)]
         reward = []
         solution_history = [solutions.clone()]
-        if record_best: best_solution = solutions.clone()
-        else: best_solution = None
+        best_solution = solutions.clone()
         
         # prepare the features
         batch_feature = problem.input_feature_encoding(batch)
@@ -200,7 +193,7 @@ class PPO:
                                                                   best_solution = best_solution)
 
             # record informations
-            if record_best: best_solution[rewards > 0] = solutions[rewards > 0]
+            best_solution[rewards > 0] = solutions[rewards > 0]
             reward.append(rewards)  
             obj_history.append(obj)
             if record: solution_history.append(solutions)
@@ -230,10 +223,6 @@ def train(rank, problem, agent, val_dataset, tb_logger):
     
     opts = agent.opts     
     warnings.filterwarnings("ignore")
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    torch.manual_seed(opts.seed)
-    np.random.seed(opts.seed)
         
     if opts.distributed:
         device = torch.device("cuda", rank)
@@ -246,10 +235,9 @@ def train(rank, problem, agent, val_dataset, tb_logger):
                     if torch.is_tensor(v):
                         state[k] = v.to(device)
         
-        if torch.cuda.device_count() > 1:
-            agent.actor = torch.nn.parallel.DistributedDataParallel(agent.actor,
-                                                                   device_ids=[rank])
-            if not opts.eval_only: agent.critic = torch.nn.parallel.DistributedDataParallel(agent.critic,
+        agent.actor = torch.nn.parallel.DistributedDataParallel(agent.actor,
+                                                               device_ids=[rank])
+        if not opts.eval_only: agent.critic = torch.nn.parallel.DistributedDataParallel(agent.critic,
                                                                    device_ids=[rank])
         if not opts.no_tb and rank == 0:
             tb_logger = TbLogger(os.path.join(opts.log_dir, "{}_{}".format(opts.problem, 
@@ -313,8 +301,7 @@ def train(rank, problem, agent, val_dataset, tb_logger):
             
         
         # validate the new model        
-        if rank == 0 and not opts.distributed: validate(rank, problem, agent, val_dataset, tb_logger, _id = epoch)
-        if rank == 0 and opts.distributed: validate(rank, problem, agent, val_dataset, tb_logger, _id = epoch)
+        if rank == 0: validate(rank, problem, agent, val_dataset, tb_logger, _id = epoch)
         
         # syn
         if opts.distributed: dist.barrier()
@@ -369,10 +356,10 @@ def train_batch(
             
             # get model output	
             action = agent.actor( problem,
-                                    batch_feature,
-                                    solution,
-                                    action,
-                                    do_sample = True)[0]
+                                 batch_feature,
+                                 solution,
+                                 action,
+                                 do_sample = True)[0]
              
             # state transient	
             solution, rewards, obj, solving_state = problem.step(batch, solution, action, obj, solving_state)
@@ -395,12 +382,12 @@ def train_batch(
     T = opts.T_train
     K_epochs = opts.K_epochs
     eps_clip = opts.eps_clip
-    t = 0
     initial_cost = obj
     solving_state = torch.zeros((batch_feature.size(0),1)).long().cuda() if opts.distributed \
                     else torch.zeros((batch_feature.size(0),1), device = opts.device).long()
     
     # sample trajectory
+    t = 0
     while t < T:
         t_s = t
         total_cost = 0
@@ -553,7 +540,7 @@ def train_batch(
             if(not opts.no_tb) and rank == 0:
                 if (current_step+1) % int(opts.log_step) == 0:
                     log_to_tb_train(tb_logger, agent, Reward, ratios, bl_val_detached, total_cost, grad_norms, memory.rewards, entropy, approx_kl_divergence,
-                       reinforce_loss, baseline_loss, logprobs, initial_cost, opts.show_figs, current_step + 1)
+                       reinforce_loss, baseline_loss, logprobs, initial_cost, current_step + 1)
                     
             if rank == 0: pbar.update(1)     
         

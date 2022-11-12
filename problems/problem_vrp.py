@@ -26,8 +26,7 @@ class CVRP(object):
         self.do_assert = with_assert
         self.step_method = step_method
         self.init_val_met = init_val_met
-        self.state = 'eval'
-        self.P = P # for perturb
+        self.P = P
         print(f'CVRP with {self.real_size} nodes and {self.dummy_size} dummy depot.\n', 
               ' Do assert:', with_assert)
         self.train()
@@ -108,10 +107,7 @@ class CVRP(object):
                 
                 for i in range(self.size - 1):
                     
-                    if True:
-                        dists = torch.arange(p_size).view(-1, p_size).expand(batch_size, p_size).clone()
-                    else:
-                        dists = torch.rand(batch_size, p_size)
+                    dists = torch.arange(p_size).view(-1, p_size).expand(batch_size, p_size).clone()
                     
                     dists.scatter_(1, selected_node, 1e5)
                     dists[~candidates] = 1e5
@@ -206,9 +202,7 @@ class CVRP(object):
         if self.do_perturb:
             
             perturb_index = (solving_state[:,:1] > self.P).view(-1)
-            
             solving_state[:,:1][perturb_index.view(-1, 1)] *= 0
-            
             pertrb_cnt = perturb_index.sum().item()
             
             if pertrb_cnt > 0:
@@ -217,27 +211,6 @@ class CVRP(object):
             return next_state, reward, torch.cat((new_obj[:,None], now_bsf[:,None]),-1) , solving_state
         
         return next_state, reward, torch.cat((new_obj[:,None], now_bsf[:,None]),-1) , solving_state
-        
-    
-    def insert(self, solution, first, second, is_perturb = False): # insert first to the back of second
-        
-        rec = solution.clone()
-        
-        # fix connection for first node
-        argsort = solution.argsort()
-        
-        pre_first = argsort.gather(1,first)
-        post_first = solution.gather(1,first)
-        
-        rec.scatter_(1,pre_first,post_first)
-        
-        # fix connection for second node
-        post_second = rec.gather(1,second)
-        
-        rec.scatter_(1,second, first)
-        rec.scatter_(1,first, post_second)
-        
-        return rec
     
     def two_opt(self, solution, first, second, is_perturb = False):
         
@@ -262,37 +235,24 @@ class CVRP(object):
             cur = torch.where(cur != second, cur_next, cur)
         
         return rec
-    
-    
-    def swap(self, solution, first_, second_, is_perturb = False):
-    
-        solution.gather(1,first_)
-        
-        con = solution.gather(1,second_) == first_
-        first = torch.where(con, second_, first_)
-        second =  torch.where(con, first_ , second_)
-         
-        rec = solution
-        argsort = solution.argsort()
-        pre_first = argsort.gather(1,first)
-      
-        # put first behind second   
-        rec1 = self.insert(solution, first, second, is_perturb)            
-        # put second behind pre_first 
-        rec = self.insert(rec1, second, pre_first, is_perturb)
-        
-        return rec
        
     def check_feasibility(self, rec, batch):
         
         p_size = self.size
 
         assert (
-            (torch.arange(p_size, out=rec.new())).view(1, -1).expand_as(rec)  == 
+            torch.arange(p_size).to(rec.device).view(1, -1).expand_as(rec)  == 
             rec.sort(1)[0]
         ).all(), "not visiting all nodes"
         
-        partial_sum = self.preprocessing(rec, batch, True)[-1]
+        real_rec = get_real_seq(rec)
+        
+        assert (
+            torch.arange(p_size).to(rec.device).view(1, -1).expand_as(real_rec)  == 
+            real_rec.sort(1)[0]
+        ).all(), "not visiting all nodes"
+        
+        partial_sum = self.preprocessing(rec, batch)[-1]
         
         assert (partial_sum <= 1 + 1e-5).all(), ("not satisfying capacity constraint")
     
@@ -316,41 +276,35 @@ class CVRP(object):
             self.check_feasibility(rec, batch)
         
         # calculate obj value
-        #first_row = torch.arange(size, device = rec.device).long().unsqueeze(0).expand(batch_size, size)
-        
         d1 = batch['coordinates'].gather(1, rec.long().unsqueeze(-1).expand(batch_size, size, 2))
-        d2 = batch['coordinates']#.gather(1, first_row.unsqueeze(-1).expand(batch_size, size, 2))
-        length =  (d1  - d2).norm(p=2, dim=2).sum(1)
-        
+        d2 = batch['coordinates']
+        length =  ((d1  - d2).norm(p=2, dim=2)).sum(1)
+
         return length
     
-    def preprocessing(self, solutions, batch, req_partial_sum = True):
+    def preprocessing(self, solutions, batch):
         
         batch_size, seq_length = solutions.size()
         demand = batch['demand'] if isinstance(batch, dict) else batch[:,:,-1]
+        arange = torch.arange(batch_size)
         
         pre = torch.zeros(batch_size, device = solutions.device).long()
         route = torch.zeros(batch_size, device = solutions.device)
-        
+        partial_sum = torch.zeros((batch_size, self.dummy_size), device = solutions.device)
         route_plan1000_visited_time1_dot_demand = torch.zeros((batch_size,seq_length), device = solutions.device)
-            
-        if req_partial_sum:
-            partial_sum = torch.zeros((batch_size, self.dummy_size), device = solutions.device)
-        else:
-            partial_sum = None
-        
+        assert seq_length < 1000
         for i in range(seq_length):
-            next_ = solutions[torch.arange(batch_size),pre]
-            route = torch.where(next_ < self.dummy_size, route + 1, route)
-            
-            cu_demand = partial_sum[torch.arange(batch_size),route.long() % self.dummy_size]
-            cu_demand = torch.where(next_ < self.dummy_size, partial_sum[torch.arange(batch_size),(route.long() - 1) % self.dummy_size], partial_sum[torch.arange(batch_size),route.long() % self.dummy_size])
-            
-            route_plan1000_visited_time1_dot_demand[torch.arange(batch_size),next_] = i+1 + route * 1000 + cu_demand * 0.5
+            next_ = solutions[arange,pre]
+            index = next_ < self.dummy_size
+            route = torch.where(index, route + 1, route)
+            cu_demand = torch.where(index, 
+                                    partial_sum[arange, (route.long() - 1) % self.dummy_size], 
+                                    partial_sum[arange, route.long() % self.dummy_size])
+            route_plan1000_visited_time1_dot_demand[arange,next_] = i+1 + route * 1000 + cu_demand * 0.5
+            partial_sum[arange,route.long() % self.dummy_size] += demand[arange, next_]
             pre = next_
-            if req_partial_sum:
-               partial_sum[torch.arange(batch_size),route.long() % self.dummy_size] += demand.gather(1,next_.view(-1,1)).view(-1)
-
+            if self.do_assert: assert (cu_demand <=1+1e-5).all()
+            
         return route_plan1000_visited_time1_dot_demand, partial_sum
     
     @staticmethod
@@ -405,7 +359,7 @@ class CVRPDataset(Dataset):
 
 def get_real_seq(solutions):
     batch_size, seq_length = solutions.size()
-    visited_time = torch.zeros((batch_size,seq_length))
+    visited_time = torch.zeros((batch_size,seq_length)).to(solutions.device)
     pre = torch.zeros((batch_size),device = solutions.device).long()
     for i in range(seq_length):
        visited_time[torch.arange(batch_size),solutions[torch.arange(batch_size),pre]] = i+1

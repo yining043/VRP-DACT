@@ -81,7 +81,6 @@ class Actor(nn.Module):
             loc = x_in[:,:,:2]            
             post = loc.gather(1, solution.view(bs, -1, 1).expand_as(loc))
             pre = loc.gather(1, argsort.view(bs, -1, 1).expand_as(loc))
-            
             post = torch.norm(post - loc, 2, -1, True)
             pre = torch.norm(pre - loc, 2, -1, True)
             
@@ -156,11 +155,11 @@ class Actor(nn.Module):
                 pair_index = M_table.max(-1)[1].view(-1,1)
         
             # from action (selected node pair)
-            col_selected = pair_index % gs 
             row_selected = pair_index // gs 
+            col_selected = pair_index % gs
             pair = torch.cat((row_selected, col_selected),-1)  # pair: no_head bs, 2
  
-        selected_log_likelihood = log_likelihood.gather(1,pair_index)
+        selected_log_likelihood = log_likelihood.gather(1, pair_index)
     
         if require_entropy:
             
