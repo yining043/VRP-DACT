@@ -39,7 +39,6 @@ Paper: Yining Ma, Jingwen Li, Zhiguang Cao, Wen Song, Hongliang Guo, Yuejiao Gon
 * numpy
 * tensorboard_logger
 * tqdm
-* matplotlib
 
 # Usage
 ## Generating data
