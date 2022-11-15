@@ -1,13 +1,12 @@
 import torch
 import math
-from torch.nn import DataParallel
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 def torch_load_cpu(load_path):
     return torch.load(load_path, map_location=lambda storage, loc: storage)  # Load on CPU
 
 def get_inner_model(model):
-    return model.module if isinstance(model, DataParallel) or isinstance(model, DDP) else model
+    return model.module if isinstance(model, DDP) else model
 
 def move_to(var, device):
     if isinstance(var, dict):

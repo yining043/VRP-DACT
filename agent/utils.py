@@ -60,16 +60,15 @@ def validate(rank, problem, agent, val_dataset, tb_logger, distributed = False, 
                                                                  record = False,
                                                                  show_bar = rank==0)
     
-    if distributed and opts.distributed: dist.barrier()
-    
     if distributed and opts.distributed:
+        dist.barrier()
         initial_cost = gather_tensor_and_concat(cost_hist[:,0].contiguous())
         time_used = gather_tensor_and_concat(torch.tensor([time.time() - s_time]).cuda())
         bv = gather_tensor_and_concat(bv.contiguous())
         costs_history = gather_tensor_and_concat(cost_hist.contiguous())
         search_history = gather_tensor_and_concat(best_hist.contiguous())
         reward = gather_tensor_and_concat(r.contiguous())
-    
+        dist.barrier()
     else:
         initial_cost = cost_hist[:,0]
         time_used = torch.tensor([time.time() - s_time])
@@ -77,8 +76,6 @@ def validate(rank, problem, agent, val_dataset, tb_logger, distributed = False, 
         costs_history = cost_hist
         search_history = best_hist
         reward = r
-        
-    if distributed and opts.distributed: dist.barrier()
         
     # log to screen  
     if rank == 0: log_to_screen(time_used, 
@@ -107,4 +104,3 @@ def validate(rank, problem, agent, val_dataset, tb_logger, distributed = False, 
                       epoch = _id)
         
     if distributed and opts.distributed: dist.barrier()
-    

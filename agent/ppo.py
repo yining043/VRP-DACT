@@ -196,7 +196,7 @@ class PPO:
             best_solution[rewards > 0] = solutions[rewards > 0]
             reward.append(rewards)  
             obj_history.append(obj)
-            if record: solution_history.append(solutions)
+            if record: solution_history.append(solutions.clone())
             
         
         out = (obj[:,-1].reshape(bs, val_m).min(1)[0], # batch_size, 1
@@ -366,10 +366,10 @@ def train_batch(
             
             if opts.best_cl:
                 index = obj[:,0] == obj[:,1]
-                solution_best[index] = solution[index]
+                solution_best[index] = solution[index].clone()
         
         if opts.best_cl:
-            solution = solution_best
+            solution = solution_best.clone()
             
         obj = problem.get_costs(batch, solution)
         

@@ -103,11 +103,10 @@ class CVRP(object):
                 cum_demand = torch.zeros(batch_size, 2)
                 
                 demand = batch['demand'].cpu()
-                selected = []
                 
                 for i in range(self.size - 1):
                     
-                    dists = torch.arange(p_size).view(-1, p_size).expand(batch_size, p_size).clone()
+                    dists = torch.arange(p_size).view(-1, p_size).repeat(batch_size, 1)
                     
                     dists.scatter_(1, selected_node, 1e5)
                     dists[~candidates] = 1e5
@@ -123,8 +122,7 @@ class CVRP(object):
                     
                     rec.scatter_(1,selected_node, next_selected_node)
                     candidates.scatter_(1, next_selected_node, 0)
-                    selected_node = next_selected_node
-                    selected.append(next_selected_node[-1].item())    
+                    selected_node = next_selected_node   
                     
                 return rec
             
@@ -140,12 +138,10 @@ class CVRP(object):
                 
                 d2 = batch['coordinates'].cpu()
                 demand = batch['demand'].cpu()
-                selected = []
                 
                 for i in range(self.size - 1):
                     
                     d1 = batch['coordinates'].cpu().gather(1, selected_node.unsqueeze(-1).expand(batch_size, self.size, 2))
-                    
                     dists = (d1 - d2).norm(p=2, dim=2)
                     
                     dists.scatter_(1, selected_node, 1e5)
@@ -162,8 +158,7 @@ class CVRP(object):
                     
                     rec.scatter_(1,selected_node, next_selected_node)
                     candidates.scatter_(1, next_selected_node, 0)
-                    selected_node = next_selected_node
-                    selected.append(next_selected_node[-1].item())                            
+                    selected_node = next_selected_node                          
 
                 return rec
             

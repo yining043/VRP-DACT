@@ -73,7 +73,7 @@ def get_options(args=None):
     
     # figure out whether to use distributed training if needed
     opts.world_size = torch.cuda.device_count()
-    opts.distributed = (torch.cuda.device_count() > 1) and (not opts.no_DDP)
+    opts.distributed = (opts.world_size > 1) and (not opts.no_DDP)
     os.environ['MASTER_ADDR'] = '127.0.0.1'
     os.environ['MASTER_PORT'] = '4869'
     # processing settings
