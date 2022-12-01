@@ -2,7 +2,7 @@
 
 DACT is a learning based improvement model for solving routing problems (e.g., TSP and CVRP), which explores dual-aspect representation, dual-aspect collaborative attention (DAC-Att) and cyclic positional encoding (CPE). It is trained by n-step Proximal Policy Optimization (PPO) with a curriculum learning (CL) strategy.
 
-***Important notes***: *<u>In branch [new_version](https://github.com/yining043/VRP-DACT/tree/new_version), we have fixed some inaccuracies in the calculation of the feasibility masks for CVRP. As a result, the updated DACT (for CVRP) has shown a much faster training speed and much better performance. The new pre-trained models are provided in the [pretrained](./pretrained) folder. We will update the new results in a new ArXiv preprint soon.</u>*
+In branch [new_version](https://github.com/yining043/VRP-DACT/tree/new_version), we have fixed some inaccuracies in the CVRP feasibility mask calculation. As a result, we could reduce the training time of CVRP while achieving similar or even better performance. The new pre-trained models are provided in the [pretrained](./pretrained) folder, and the new results are updated in the latest [ArXiv preprint](https://arxiv.org/abs/2110.02544).
 
 ![](https://raw.githubusercontent.com/yining043/TSP-improve/master/outputs/ep_gif_0.gif)
 
@@ -29,7 +29,7 @@ Please note that in our implementation, the VRP solution is stored in a linked l
 
 
 # One more thing
-*<u>You may be interested in our new approach called [N2S](https://github.com/yining043/PDP-N2S) (IJCAI 2022) which makes DACT more efficient for solving pickup and delivery problems (PDPs). And the proposed Synthesis Attention (Synth-Att) could largely enhance the efficiency of DACT.</u>*
+You may be interested in our new approach called [N2S](https://github.com/yining043/PDP-N2S) (IJCAI 2022) which makes DACT more efficient for solving pickup and delivery problems (PDPs). And the proposed Synthetic Attention (Synth-Att) in N2S has the potential to improve the efficiency of DACT further.
 
 Paper: Yining Ma, Jingwen Li, Zhiguang Cao, Wen Song, Hongliang Guo, Yuejiao Gong and Yeow Meng Chee, “[Efficient Neural Neighborhood Search for Pickup and Delivery Problems](https://arxiv.org/abs/2204.11399),” in the 31st International Joint Conference on Artificial Intelligence (IJCAI 22), 2022.
 
@@ -52,11 +52,11 @@ CUDA_VISIBLE_DEVICES=0,1 python run.py --problem tsp --graph_size 50 --step_meth
 ```
 
 ### CVRP example
-For training CVRP instances with 20 nodes and GPU cards 0:
+For training CVRP instances with 20 nodes and GPU card 0:
 ```python
 CUDA_VISIBLE_DEVICES=0 python run.py --problem vrp --graph_size 20 --dummy_rate 0.5 --step_method 2_opt --n_step 5 --T_train 250 --Xi_CL 1 --best_cl --max_grad_norm 0.04 --val_m 1 --val_dataset  './datasets/cvrp_20_10000.pkl' --run_name 'example_training_CVRP20'
 ```
-*<u>Note: hyper-parameters ''--n_step 5 --T_train 250'' are good enough for CVRP now. And we consider loading the pre-trained models of TSP50, CVRP20, and CVRP50 to train TSP100, CVRP-50, and CVRP100 for faster convergency respectively. And please pay attention to the argument "--dummy_rate" (CVRP) which should be set to a proper value for different CVRP instances (e.g., 0.5 for CVRP20, 0.4 for CVRP50, 0.2 for CVRP100).</u>*
+Note: hyper-parameters ''--n_step 5 --T_train 250'' are good enough for CVRP now. And we consider loading the pre-trained models of TSP50, CVRP20, and CVRP50 to train TSP100, CVRP-50, and CVRP100 for faster convergency respectively. Please pay attention to the argument "--dummy_rate" for CVRP where we should use different values for different CVRP sizes (e.g., we use 0.5 for CVRP20, 0.4 for CVRP50, and 0.2 for CVRP100).
 
 ### Warm start
 You can initialize a run using a pretrained model by adding the --load_path option:
@@ -93,8 +93,8 @@ For inference 512 CVRP instances with 100 nodes and 8 data augments:
 CUDA_VISIBLE_DEVICES=0,1,2,3 python run.py --problem vrp --graph_size 100 --dummy_rate 0.2 --step_method 2_opt --eval_only --init_val_met greedy --load_path 'pretrained/cvrp100-epoch-190.pt' --T_max 10000 --val_size 512 --val_dataset  './datasets/cvrp_100_10000.pkl' --val_m 8 --no_saving --no_tb
 ```
 
-*<u>See [options.py](./options.py) for detailed help on the meaning of each argument.
-For generalization of DACT on larger sizes and different distributions, a good practice is to consider reducing the opts.P to a smaller value (see line 81 of options.py). Meanwhile, when the distribution/size is significantly different, we can consider the way 2 of generalizing CPEs (see lines 544-550 of nets/graph_layers.py) for better performance. See the detailed configuration in the updated Arkiv preprint (v3). And please pay attention to the argument "--dummy_rate" (CVRP) which should be set to a proper value for different CVRP instances (e.g., 0.5 for CVRP20, 0.4 for CVRP50, 0.2 for CVRP100).</u>*
+See [options.py](./options.py) for detailed help on the meaning of each argument.
+For generalization of DACT on larger sizes and different distributions, we consider reducing the opts.P to a smaller value (see line 81 of options.py). Meanwhile, when the distribution/size is significantly different, we can consider the way 2 of generalizing CPEs (see lines 544-550 of nets/graph_layers.py) for (not guaranteed) better performance (optional). Please pay attention to the argument "--dummy_rate" for CVRP where we should use different values for different CVRP sizes (e.g., we use 0.5 for CVRP20, 0.4 for CVRP50, and 0.2 for CVRP100 by default).
 
 # Acknowledgements
-The code and the framework are based on the repos [wouterkool/attention-learn-to-route](https://github.com/wouterkool/attention-learn-to-route) and [yining043/TSP-improve](https://github.com/yining043/TSP-improve). And we thank @small-Qing and @yzhang-gh for raising insightful issues to help improve this project.
+The code and the framework are based on the repos [wouterkool/attention-learn-to-route](https://github.com/wouterkool/attention-learn-to-route) and [yining043/TSP-improve](https://github.com/yining043/TSP-improve). And we thank [@small-Qing](https://github.com/small-Qing) and [@yzhang-gh](https://github.com/yzhang-gh) for raising insightful issues to help improve this project.

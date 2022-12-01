@@ -1,6 +1,8 @@
 import time
 import torch
 import os
+import random
+import numpy as np
 from utils.logger import log_to_screen, log_to_tb_val
 import torch.distributed as dist
 from torch.utils.data import DataLoader
@@ -20,6 +22,11 @@ def validate(rank, problem, agent, val_dataset, tb_logger, distributed = False, 
     agent.eval()
     problem.eval()
     
+    if opts.eval_only:
+        torch.manual_seed(opts.seed)
+        np.random.seed(opts.seed)
+        random.seed(opts.seed)
+    
     val_dataset = problem.make_dataset(size=opts.graph_size,
                                num_samples=opts.val_size,
                                filename = val_dataset,
@@ -36,8 +43,6 @@ def validate(rank, problem, agent, val_dataset, tb_logger, distributed = False, 
             tb_logger = TbLogger(os.path.join(opts.log_dir, "{}_{}".format(opts.problem, 
                                                           opts.graph_size), opts.run_name))
 
-    
-    if distributed and opts.distributed:
         assert opts.val_size % opts.world_size == 0
         train_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False)
         val_dataloader = DataLoader(val_dataset, batch_size = opts.val_size // opts.world_size, shuffle=False,

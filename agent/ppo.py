@@ -3,6 +3,7 @@ import warnings
 import torch
 import numpy as np
 from tqdm import tqdm
+import random
 from torch.utils.data import DataLoader
 from tensorboard_logger import Logger as TbLogger
 import torch.multiprocessing as mp
@@ -223,6 +224,10 @@ def train(rank, problem, agent, val_dataset, tb_logger):
     
     opts = agent.opts     
     warnings.filterwarnings("ignore")
+    if opts.resume is None:
+        torch.manual_seed(opts.seed)
+        np.random.seed(opts.seed)
+        random.seed(opts.seed)
         
     if opts.distributed:
         device = torch.device("cuda", rank)
